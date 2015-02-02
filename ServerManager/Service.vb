@@ -4,6 +4,14 @@ Imports System.Web.Script.Serialization
 Public Class Service
     Private WithEvents _p As New Process
     Public Event OutputDataRecieved(sender As Object, e As DataReceivedEventArgs)
+    ''' <summary>
+    ''' Set by the server manager to find the service name.
+    ''' </summary>
+    ''' <value></value>
+    ''' <returns></returns>
+    ''' <remarks></remarks>
+    Public Property ServiceName As String
+
     Public Overridable Property Filename As String
     Public Overridable Property Arguments As String
     Public Property OutputLog As StringBuilder

@@ -18,6 +18,7 @@ Public Class ConnectionServer
         Cancel = False
         Listener.Start()
         While Not Cancel
+            Dim close As Boolean = True
             Dim client As TcpClient = Listener.AcceptTcpClient
             Dim s = client.GetStream
             Dim bytes As New List(Of Byte)
@@ -31,14 +32,16 @@ Public Class ConnectionServer
                 Dim args = New ConnectionServerEventArgs(packet, client, EncryptKey)
                 RaiseEvent ClientConnected(Me, args)
                 Cancel = args.Cancel
+                close = args.close
             End If
-            client.Close()
+            If close Then client.Close()
         End While
     End Sub
     Public Async Function StartListening() As task
         Cancel = False
         Listener.Start()
         While Not Cancel
+            Dim close As Boolean = True
             Dim client As TcpClient = Await Listener.AcceptTcpClientAsync
             Dim s = client.GetStream
             Dim bytes As New List(Of Byte)
@@ -52,8 +55,9 @@ Public Class ConnectionServer
                 Dim args = New ConnectionServerEventArgs(packet, client, EncryptKey)
                 RaiseEvent ClientConnected(Me, args)
                 Cancel = args.Cancel
+                close = args.Close
             End If
-            client.Close()
+            If close Then client.Close()
         End While
     End Function
     Public Sub StopListening()
@@ -71,13 +75,37 @@ Public Class ConnectionServerEventArgs
     Private EncryptKey As PublicKey
     Public Property Request As RequestPacket
     Public Property Cancel As Boolean
+    ''' <summary>
+    ''' Whether or not to close the client connection after the event.
+    ''' Useful when responses will be sent after all events fire.
+    ''' </summary>
+    ''' <value></value>
+    ''' <returns></returns>
+    ''' <remarks></remarks>
+    Public Property Close As Boolean
     Public Sub SendResponse(Response As ResponsePacket)
-        Dim e = Response.EncryptPacket(EncryptKey)
-        _client.GetStream.Write(e, 0, e.Length)
+        Try
+            Dim e = Response.EncryptPacket(EncryptKey)
+            Dim s = _Client.GetStream
+            'Dim d = (New ResponsePacket("length", e.Length)).EncryptPacket(EncryptKey)
+            Dim l = BitConverter.GetBytes(e.Length)
+            Dim buffer As New List(Of Byte)
+            For Each item In l
+                buffer.Add(item)
+            Next
+            For Each item In e
+                buffer.Add(item)
+            Next
+            Dim bytes = buffer.ToArray
+            s.Write(bytes, 0, bytes.Length)
+        Catch ex As Exception
+            Console.WriteLine(ex)
+        End Try
     End Sub
     Public Sub New(Request As RequestPacket, ByRef Client As TcpClient, EncryptKey As PublicKey)
         Me.Request = Request
         Me.Client = Client
         Me.Cancel = False
+        Me.Close = True
     End Sub
 End Class

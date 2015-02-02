@@ -1,9 +1,11 @@
 ﻿Imports System.Text
+Imports System.Net.Sockets
 
 Public Class Manager
     Public Property Servers As Dictionary(Of String, Service)
     Private Property ServiceConstructors As Dictionary(Of String, CreateService)
     Delegate Function CreateService(ServiceData As String) As Service
+    Private Property COutClients As New Dictionary(Of String, ConnectionServerEventArgs)
 #Region "Events and Handlers"
     Public Sub HandleRequest(sender As Object, ByRef e As ServerManager.ConnectionServerEventArgs)
         Select Case e.Request.Type
@@ -17,9 +19,9 @@ Public Class Manager
                 End If
             Case "cout"
                 If Servers.ContainsKey(e.Request.Request) Then
-                    'Response will be larger than currently allowed.
-                    'e.SendResponse(New ResponsePacket("cout", Servers(e.Request.Request).OutputLog.ToString))
-                    e.SendResponse(New ResponsePacket("string", "Feature not currently supported."))
+                    e.Close = False
+                    COutClients.Add(e.Request.Request, e)
+                    e.SendResponse(New ResponsePacket("string", "You will be sent additional packets for the console's output."))
                 Else
                     e.SendResponse(New ResponsePacket("string", "Server " & e.Request.Request & " is not currently loaded or does not exist."))
                 End If
@@ -28,6 +30,13 @@ Public Class Manager
 
     Public Event ConsoleDataWritten(sender As Object, args As DataReceivedEventArgs)
     Private Sub OnConsoleDataWritten(sender As Object, args As DataReceivedEventArgs)
+        'Because COutCLients may be changed while this runs
+        Dim clients As New Dictionary(Of String, ConnectionServerEventArgs)(COutClients)
+        For Each item In clients
+            If DirectCast(sender, Service).ServiceName = item.Key Then
+                item.Value.SendResponse(New ResponsePacket("cout-" & item.Key, args.Data))
+            End If
+        Next
         RaiseEvent ConsoleDataWritten(sender, args)
     End Sub
 #End Region
@@ -48,6 +57,7 @@ Public Class Manager
             Dim parts As String() = item.Split(" ".ToCharArray, 3)
             If ServiceConstructors.ContainsKey(parts(0)) Then
                 Servers.Add(parts(1), ServiceConstructors(parts(0)).Invoke(parts(2)))
+                Servers(parts(1)).ServiceName = parts(1)
             End If
         Next
     End Sub
