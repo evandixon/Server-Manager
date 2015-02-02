@@ -4,11 +4,11 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{E8C15896-832B-46E0-AC5D-691FCEA43BFA}</ProjectGuid>
+    <ProjectGuid>{4C3C2067-F80A-4900-ABC4-DB4041CB0611}</ProjectGuid>
     <OutputType>Exe</OutputType>
-    <StartupObject>ConsoleHost.Module1</StartupObject>
-    <RootNamespace>ConsoleHost</RootNamespace>
-    <AssemblyName>ConsoleHost</AssemblyName>
+    <StartupObject>Server.Module1</StartupObject>
+    <RootNamespace>Server</RootNamespace>
+    <AssemblyName>Server</AssemblyName>
     <FileAlignment>512</FileAlignment>
     <MyType>Console</MyType>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
@@ -20,7 +20,7 @@
     <DefineDebug>true</DefineDebug>
     <DefineTrace>true</DefineTrace>
     <OutputPath>bin\Debug\</OutputPath>
-    <DocumentationFile>ConsoleHost.xml</DocumentationFile>
+    <DocumentationFile>Server.xml</DocumentationFile>
     <NoWarn>42016,41999,42017,42018,42019,42032,42036,42020,42021,42022</NoWarn>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
@@ -30,7 +30,7 @@
     <DefineTrace>true</DefineTrace>
     <Optimize>true</Optimize>
     <OutputPath>bin\Release\</OutputPath>
-    <DocumentationFile>ConsoleHost.xml</DocumentationFile>
+    <DocumentationFile>Server.xml</DocumentationFile>
     <NoWarn>42016,41999,42017,42018,42019,42032,42036,42020,42021,42022</NoWarn>
   </PropertyGroup>
   <PropertyGroup>
@@ -104,6 +104,10 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Encryption\EncryptionClassLibrary.vbproj">
+      <Project>{3c78afe8-0c82-4009-a8ba-14f20f59a576}</Project>
+      <Name>EncryptionClassLibrary</Name>
+    </ProjectReference>
     <ProjectReference Include="..\ServerManager\ServerManager.vbproj">
       <Project>{cca6adce-fdcc-4ae7-99f8-409e49fd1a75}</Project>
       <Name>ServerManager</Name>
