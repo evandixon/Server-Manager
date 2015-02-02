@@ -130,5 +130,11 @@
   <ItemGroup>
     <None Include="App.config" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\ServerManager\ServerManager.vbproj">
+      <Project>{cca6adce-fdcc-4ae7-99f8-409e49fd1a75}</Project>
+      <Name>ServerManager</Name>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.VisualBasic.targets" />
 </Project>

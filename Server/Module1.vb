@@ -7,15 +7,15 @@ Module Module1
         manager = New ServerManager.Manager()
         manager.StartAllServers()
         AddHandler listener.ClientConnected, AddressOf manager.HandleRequest
-        listener.Listen()
+        listener.StartListening()
+        Console.ReadLine()
         manager.StopAllServers()
     End Sub
-
     Private Sub m_ClientConnected(sender As Object, ByRef e As ServerManager.ConnectionServerEventArgs) Handles listener.ClientConnected
         Console.WriteLine(String.Format("Request recieved from {0}.  Request type: {1}.  Request body: {2}", e.Request.Username, e.Request.Type, e.Request.Request))
     End Sub
 
-    Private Sub manager_ConsoleDataWritten(sender As Object, args As ServerManager.Service.ConsoleWrittenEventArgs) Handles manager.ConsoleDataWritten
-        Console.WriteLine(args.Line)
+    Private Sub manager_ConsoleDataWritten(sender As Object, args As DataReceivedEventArgs) Handles manager.ConsoleDataWritten
+        Console.WriteLine(args.Data)
     End Sub
 End Module

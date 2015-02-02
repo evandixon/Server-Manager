@@ -35,6 +35,27 @@ Public Class ConnectionServer
             client.Close()
         End While
     End Sub
+    Public Async Function StartListening() As task
+        Cancel = False
+        Listener.Start()
+        While Not Cancel
+            Dim client As TcpClient = Await Listener.AcceptTcpClientAsync
+            Dim s = client.GetStream
+            Dim bytes As New List(Of Byte)
+            Dim buffer(256) As Byte
+            Dim i = s.Read(buffer, 0, buffer.Length - 1)
+            For count As Integer = 0 To i - 1
+                bytes.Add(buffer(count))
+            Next
+            Dim packet = RequestPacket.DecryptPacket(bytes.ToArray, DecryptKey)
+            If Security.IsValidUser(packet.Username, packet.Password) Then
+                Dim args = New ConnectionServerEventArgs(packet, client, EncryptKey)
+                RaiseEvent ClientConnected(Me, args)
+                Cancel = args.Cancel
+            End If
+            client.Close()
+        End While
+    End Function
     Public Sub StopListening()
         Listener.Stop()
     End Sub

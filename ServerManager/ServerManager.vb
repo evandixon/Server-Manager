@@ -15,11 +15,19 @@ Public Class Manager
                 Else
                     e.SendResponse(New ResponsePacket("string", "Server " & parts(0) & " is not currently loaded or does not exist."))
                 End If
+            Case "cout"
+                If Servers.ContainsKey(e.Request.Request) Then
+                    'Response will be larger than currently allowed.
+                    'e.SendResponse(New ResponsePacket("cout", Servers(e.Request.Request).OutputLog.ToString))
+                    e.SendResponse(New ResponsePacket("string", "Feature not currently supported."))
+                Else
+                    e.SendResponse(New ResponsePacket("string", "Server " & e.Request.Request & " is not currently loaded or does not exist."))
+                End If
         End Select
     End Sub
 
-    Public Event ConsoleDataWritten(sender As Object, args As Service.ConsoleWrittenEventArgs)
-    Private Sub OnConsoleDataWritten(sender As Object, args As Service.ConsoleWrittenEventArgs)
+    Public Event ConsoleDataWritten(sender As Object, args As DataReceivedEventArgs)
+    Private Sub OnConsoleDataWritten(sender As Object, args As DataReceivedEventArgs)
         RaiseEvent ConsoleDataWritten(sender, args)
     End Sub
 #End Region

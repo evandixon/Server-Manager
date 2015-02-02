@@ -2,40 +2,36 @@
 Imports System.Web.Script.Serialization
 
 Public Class Service
-    Dim _p As Process
-    Public Event OutputDataRecieved(sender As Object, e As ConsoleWrittenEventArgs)
+    Private WithEvents _p As New Process
+    Public Event OutputDataRecieved(sender As Object, e As DataReceivedEventArgs)
     Public Overridable Property Filename As String
     Public Overridable Property Arguments As String
     Public Property OutputLog As StringBuilder
-    Protected Overridable Sub InitializeProcess()
-        _p = New Process
-        With _p
-            .StartInfo.FileName = Filename
-            .StartInfo.Arguments = Arguments
-            .StartInfo.WindowStyle = ProcessWindowStyle.Hidden
-            .StartInfo.RedirectStandardOutput = True
-            .StartInfo.RedirectStandardInput = True
-            .StartInfo.UseShellExecute = False
-            AddHandler .OutputDataReceived, AddressOf OutputHandler
-        End With
+    Public Function GetOutputString() As String
+        Return OutputLog.ToString
+    End Function
+
+    Private Sub _p_ErrorDataReceived(sender As Object, e As DataReceivedEventArgs) Handles _p.ErrorDataReceived
+        OutputHandler(sender, e)
     End Sub
     ''' <summary>
-    ''' Posted by brendan at http://stackoverflow.com/questions/9996709/read-console-process-output
+    ''' 
     ''' </summary>
     ''' <param name="sendingProcess"></param>
     ''' <param name="outLine"></param>
-    ''' <remarks></remarks>
-    Private Sub OutputHandler(sendingProcess As Object, outLine As DataReceivedEventArgs)
+    ''' <remarks>Posted by brendan at http://stackoverflow.com/questions/9996709/read-console-process-output</remarks>
+    Private Sub OutputHandler(sendingProcess As Object, outLine As DataReceivedEventArgs) Handles _p.OutputDataReceived
         ' Collect the sort command output.
         If Not String.IsNullOrEmpty(outLine.Data) Then
             'Add the text to the collected output.
             OutputLog.AppendLine(outLine.Data)
-            RaiseEvent OutputDataRecieved(Me, New ConsoleWrittenEventArgs(outLine.Data))
+            RaiseEvent OutputDataRecieved(Me, outLine)
         End If
     End Sub
     Public Overridable Sub StartServer()
         _p.Start()
         _p.BeginOutputReadLine()
+        _p.BeginErrorReadLine()
     End Sub
 
     Public Overridable Sub StopServer()
@@ -54,7 +50,18 @@ Public Class Service
         Me.Filename = Filename
         Me.Arguments = Arguments
         OutputLog = New StringBuilder
-        InitializeProcess()
+        '_p = Process
+        With _p
+            .StartInfo.FileName = Filename
+            .StartInfo.Arguments = Arguments
+            .StartInfo.WindowStyle = ProcessWindowStyle.Hidden
+            .StartInfo.RedirectStandardOutput = True
+            .StartInfo.RedirectStandardInput = True
+            .StartInfo.RedirectStandardError = True
+            .StartInfo.UseShellExecute = False
+            .StartInfo.CreateNoWindow = True
+            .EnableRaisingEvents = True
+        End With
     End Sub
     Public Shared Function GetServiceFromStartData(ConstructorData As String) As Service
         Dim parts As String() = ConstructorData.Split(";".ToCharArray, 2)
@@ -66,11 +73,4 @@ Public Class Service
     Public Overridable Function GetServiceType() As String
         Return "service"
     End Function
-    Public Class ConsoleWrittenEventArgs
-        Inherits EventArgs
-        Public Property Line As String
-        Public Sub New(Line As String)
-            Me.Line = Line
-        End Sub
-    End Class
 End Class
