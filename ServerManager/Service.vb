@@ -1,4 +1,5 @@
 ﻿Imports System.Text
+Imports System.Web.Script.Serialization
 
 Public Class Service
     Dim _p As Process
@@ -43,13 +44,28 @@ Public Class Service
     Public Overridable Sub SendInput(ConsoleLine As String)
         _p.StandardInput.WriteLine(ConsoleLine)
     End Sub
-    Public Sub New(Filename As String, Optional Arguments As String = "")
+    Public Overridable Function ToJson() As String
+        Dim j As New JavaScriptSerializer
+        Return j.Serialize(Me)
+    End Function
+
+    Public Sub New(Filename As String, Arguments As String)
         MyBase.New()
         Me.Filename = Filename
         Me.Arguments = Arguments
         OutputLog = New StringBuilder
         InitializeProcess()
     End Sub
+    Public Shared Function GetServiceFromStartData(ConstructorData As String) As Service
+        Dim parts As String() = ConstructorData.Split(";".ToCharArray, 2)
+        Return New Service(parts(0), parts(1))
+    End Function
+    Public Overridable Function GetConstructorData() As String
+        Return String.Format("{0};{1}", Filename, Arguments)
+    End Function
+    Public Overridable Function GetServiceType() As String
+        Return "service"
+    End Function
     Public Class ConsoleWrittenEventArgs
         Inherits EventArgs
         Public Property Line As String

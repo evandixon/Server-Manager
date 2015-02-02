@@ -4,14 +4,20 @@ Imports System.Net
 Imports EncryptionClassLibrary.Encryption.Asymmetric
 
 Public Class ConnectionServer
-    Public Event ClientConnected(sender As Object, e As ConnectionServerEventArgs)
+    Public Event ClientConnected(sender As Object, ByRef e As ConnectionServerEventArgs)
     Private Listener As TcpListener
     Private Cancel As Boolean
     Private DecryptKey As PrivateKey
     Private EncryptKey As PublicKey
+    ''' <summary>
+    ''' Listens for incoming connections until an event handler cancels it.
+    ''' Runs synchronously.
+    ''' </summary>
+    ''' <remarks></remarks>
     Public Sub Listen()
+        Cancel = False
         Listener.Start()
-        While True 'Not Cancel
+        While Not Cancel
             Dim client As TcpClient = Listener.AcceptTcpClient
             Dim s = client.GetStream
             Dim bytes As New List(Of Byte)
@@ -22,7 +28,9 @@ Public Class ConnectionServer
             Next
             Dim packet = RequestPacket.DecryptPacket(bytes.ToArray, DecryptKey)
             If Security.IsValidUser(packet.Username, packet.Password) Then
-                RaiseEvent ClientConnected(Me, New ConnectionServerEventArgs(packet, client, EncryptKey))
+                Dim args = New ConnectionServerEventArgs(packet, client, EncryptKey)
+                RaiseEvent ClientConnected(Me, args)
+                Cancel = args.Cancel
             End If
             client.Close()
         End While
@@ -41,6 +49,7 @@ Public Class ConnectionServerEventArgs
     Dim _client As TcpClient
     Private EncryptKey As PublicKey
     Public Property Request As RequestPacket
+    Public Property Cancel As Boolean
     Public Sub SendResponse(Response As ResponsePacket)
         Dim e = Response.EncryptPacket(EncryptKey)
         _client.GetStream.Write(e, 0, e.Length)
@@ -48,5 +57,6 @@ Public Class ConnectionServerEventArgs
     Public Sub New(Request As RequestPacket, ByRef Client As TcpClient, EncryptKey As PublicKey)
         Me.Request = Request
         Me._client = Client
+        Me.Cancel = False
     End Sub
 End Class

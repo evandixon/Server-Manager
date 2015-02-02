@@ -69,7 +69,7 @@
     <Compile Include="RequestPacket.vb" />
     <Compile Include="ResponsePacket.vb" />
     <Compile Include="Security.vb" />
-    <Compile Include="Server.vb" />
+    <Compile Include="Service.vb" />
     <Compile Include="ServerManager.vb" />
     <Compile Include="My Project\AssemblyInfo.vb" />
     <Compile Include="My Project\Application.Designer.vb">
