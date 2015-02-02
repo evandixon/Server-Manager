@@ -6,7 +6,16 @@ Public Class Manager
     Delegate Function CreateService(ServiceData As String) As Service
 #Region "Events and Handlers"
     Public Sub HandleRequest(sender As Object, ByRef e As ServerManager.ConnectionServerEventArgs)
-
+        Select Case e.Request.Type
+            Case "cin"
+                Dim parts As String() = e.Request.Request.Split(" ".ToCharArray, 2)
+                If Servers.ContainsKey(parts(0)) Then
+                    Servers(parts(0)).SendInput(parts(1))
+                    e.SendResponse(New ResponsePacket("string", "Input sent successfully."))
+                Else
+                    e.SendResponse(New ResponsePacket("string", "Server " & parts(0) & " is not currently loaded or does not exist."))
+                End If
+        End Select
     End Sub
 
     Public Event ConsoleDataWritten(sender As Object, args As Service.ConsoleWrittenEventArgs)

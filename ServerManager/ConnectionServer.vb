@@ -46,7 +46,7 @@ Public Class ConnectionServer
 End Class
 Public Class ConnectionServerEventArgs
     Inherits EventArgs
-    Dim _client As TcpClient
+    Public Property Client As TcpClient
     Private EncryptKey As PublicKey
     Public Property Request As RequestPacket
     Public Property Cancel As Boolean
@@ -56,7 +56,7 @@ Public Class ConnectionServerEventArgs
     End Sub
     Public Sub New(Request As RequestPacket, ByRef Client As TcpClient, EncryptKey As PublicKey)
         Me.Request = Request
-        Me._client = Client
+        Me.Client = Client
         Me.Cancel = False
     End Sub
 End Class
