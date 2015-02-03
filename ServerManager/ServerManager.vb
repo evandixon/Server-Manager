@@ -9,14 +9,8 @@ Public Class Manager
 #Region "Events and Handlers"
     Public Sub HandleRequest(sender As Object, ByRef e As ServerManager.ConnectionServerEventArgs)
         Select Case e.Request.Type
-            Case "cin"
-                Dim parts As String() = e.Request.Request.Split(" ".ToCharArray, 2)
-                If Servers.ContainsKey(parts(0)) Then
-                    Servers(parts(0)).SendInput(parts(1))
-                    e.SendResponse(New ResponsePacket("string", "Input sent successfully."))
-                Else
-                    e.SendResponse(New ResponsePacket("string", "Server " & parts(0) & " is not currently loaded or does not exist."))
-                End If
+            Case "command"
+                e.SendResponse(New ResponsePacket("string", HandleRootConsoleInput(e.Request.Request)))
             Case "cout"
                 If Servers.ContainsKey(e.Request.Request) Then
                     e.Close = False
@@ -27,6 +21,63 @@ Public Class Manager
                 End If
         End Select
     End Sub
+    Public Function HandleRootConsoleInput(Command As String) As String
+        Dim commandParts As String() = Command.Split(" ".ToCharArray, 2)
+        If commandParts.Length > 0 Then
+            Select Case commandParts(0).ToLower
+                Case "cin"
+                    If commandParts.Length > 1 AndAlso commandParts(1).Contains(" ") Then
+                        Dim parts As String() = commandParts(1).Split(" ".ToCharArray, 2)
+                        If Servers.ContainsKey(parts(0)) Then
+                            Servers(parts(0)).SendInput(parts(1))
+                            Return "Input sent successfully."
+                        Else
+                            Return "Server " & parts(0) & " is not currently loaded or does not exist."
+                        End If
+                    Else
+                        Return "Usage: cin <server> <command>"
+                    End If
+                Case "start"
+                    If commandParts.Length > 1 Then
+                        If Servers.ContainsKey(commandParts(1)) Then
+                            Servers(commandParts(1)).StartServer()
+                            Return "Server started successfully."
+                        Else
+                            Return "Server " & commandParts(1) & " is not currently loaded or does not exist."
+                        End If
+                    Else
+                        Return "Usage: start <server>"
+                    End If
+                Case "stop"
+                    If commandParts.Length > 1 Then
+                        If Servers.ContainsKey(commandParts(1)) Then
+                            Servers(commandParts(1)).StopServer()
+                            Return "Server stopped successfully."
+                        Else
+                            Return "Server " & commandParts(1) & " is not currently loaded or does not exist."
+                        End If
+                    Else
+                        Return "Usage: stop <server>"
+                    End If
+                Case "restart"
+                    If commandParts.Length > 1 Then
+                        If Servers.ContainsKey(commandParts(1)) Then
+                            Servers(commandParts(1)).StopServer()
+                            Servers(commandParts(1)).StartServer()
+                            Return "Server restarted successfully."
+                        Else
+                            Return "Server " & commandParts(1) & " is not currently loaded or does not exist."
+                        End If
+                    Else
+                        Return "Usage: restart <server>"
+                    End If
+                Case Else
+                    Return "Unknown command """ & commandParts(0) & """."
+            End Select
+        Else
+            Return "Given command was empty."
+        End If
+    End Function
 
     Public Event ConsoleDataWritten(sender As Object, args As DataReceivedEventArgs)
     Private Sub OnConsoleDataWritten(sender As Object, args As DataReceivedEventArgs)
