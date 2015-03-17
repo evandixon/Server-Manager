@@ -45,6 +45,9 @@ Public Class Service
     Public Overridable Sub StopServer()
         _p.Close()
     End Sub
+    Public Overridable Sub KillServer()
+        _p.Kill()
+    End Sub
     Public Overridable Sub SendInput(ConsoleLine As String)
         _p.StandardInput.WriteLine(ConsoleLine)
     End Sub

@@ -8,10 +8,11 @@ Module Module1
         'Dim r = m.SendRequest(New ServerManager.RequestPacket("evandixon", "passwprd", "cout", Console.ReadLine))
         'Console.WriteLine(r.Response)
         'End While
-        Console.ReadLine()
+        'Console.ReadLine()
         c = New ServerManager.ConnectionClient(New IPAddress({127, 0, 0, 1}), 64325, ServerManager.Keys.GetPrivateKey, ServerManager.Keys.GetPublicKey)
-        c.SendRequestAsync(New ServerManager.RequestPacket("evandixon", "password", "cout", "addy"))
-        Console.ReadLine()
+        While True
+            c.SendRequest(New ServerManager.RequestPacket("evandixon", "password", "command", Console.ReadLine))
+        End While
     End Sub
 
     Private Sub c_ResponseRecieved(sender As Object, r As ServerManager.ResponsePacket) Handles c.ResponseRecieved

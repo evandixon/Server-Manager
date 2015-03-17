@@ -66,6 +66,7 @@
     <Compile Include="ConnectionClient.vb" />
     <Compile Include="ConnectionServer.vb" />
     <Compile Include="Keys.vb" />
+    <Compile Include="PluginManager.vb" />
     <Compile Include="RequestPacket.vb" />
     <Compile Include="ResponsePacket.vb" />
     <Compile Include="Security.vb" />
@@ -86,6 +87,7 @@
       <DependentUpon>Settings.settings</DependentUpon>
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
     </Compile>
+    <Compile Include="ServicePlugin.vb" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="My Project\Resources.resx">

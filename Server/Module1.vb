@@ -15,7 +15,7 @@ Module Module1
         Console.WriteLine(String.Format("Request recieved from {0}.  Request type: {1}.  Request body: {2}", e.Request.Username, e.Request.Type, e.Request.Request))
     End Sub
 
-    'Private Sub manager_ConsoleDataWritten(sender As Object, args As DataReceivedEventArgs) Handles manager.ConsoleDataWritten
-    '    'Console.WriteLine(args.Data)
-    'End Sub
+    Private Sub manager_ConsoleDataWritten(sender As Object, args As DataReceivedEventArgs) Handles manager.ConsoleDataWritten
+        'Console.WriteLine(args.Data)
+    End Sub
 End Module

@@ -9,20 +9,21 @@ Public Class ConnectionClient
     Private EndPoint As IPEndPoint
     Public Event ResponseRecieved(sender As Object, r As ResponsePacket)
     Public Function SendRequest(Request As RequestPacket) As ResponsePacket
+        Client = New TcpClient()
         Client.Connect(EndPoint)
         Dim s = Client.GetStream
         Dim d = Request.EncryptPacket(EncryptKey)
-        s.Write(d, 0, d.Length)
-        
-        Dim p = ResponsePacket.DecryptPacket(GetBytesFromStream(s, 256), DecryptKey)
-        If p.Type = "length" Then
-            Dim r = ResponsePacket.DecryptPacket(GetBytesFromStream(s, CInt(p.Response)), DecryptKey)
-            Client.Close()
-            Return r
-        Else
-            Client.Close()
-            Return p
-        End If
+        Dim toSend As New List(Of Byte)
+        toSend.AddRange(BitConverter.GetBytes(d.Length))
+        toSend.AddRange(d)
+        s.Write(toSend.ToArray, 0, toSend.Count)
+        Dim p As Integer = 0
+        Dim pbuf(3) As Byte
+        s.Read(pbuf, 0, pbuf.Length)
+        Dim data = GetBytesFromStream(s, p)
+        p = BitConverter.ToInt32(pbuf, 0)
+        Client.Close()
+        Return ResponsePacket.DecryptPacket(data, DecryptKey)
     End Function
     ''' <summary>
     ''' Sends a request, then asynchronously waits for response packets.
@@ -65,7 +66,6 @@ Public Class ConnectionClient
             Return bytes.ToArray
     End Function
     Public Sub New(IP As IPAddress, Port As Integer, DecryptKey As PrivateKey, EncryptKey As PublicKey)
-        Client = New TcpClient()
         EndPoint = New IPEndPoint(IP, Port)
         Me.DecryptKey = DecryptKey
         Me.EncryptKey = EncryptKey

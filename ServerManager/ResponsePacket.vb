@@ -18,7 +18,7 @@ Public Class ResponsePacket
         'Dim Decrypted = a.Decrypt(Encrypted, PrivateKey)
         Dim j As New JavaScriptSerializer
         'Return j.Deserialize(Of RequestPacket)(Decrypted.Text)
-        Return j.Deserialize(Of ResponsePacket)(Text.Encoding.ASCII.GetString(EncryptedData))
+        Return j.Deserialize(Of ResponsePacket)(Text.Encoding.ASCII.GetString(Security.DecryptData(PrivateKey, EncryptedData)))
     End Function
     ''' <summary>
     ''' In the future, will encrypt the packet using symmetric encryption, with asymetric encryption to encrypt the key.
@@ -33,6 +33,6 @@ Public Class ResponsePacket
         'Dim a As New EncryptionClassLibrary.Encryption.Asymmetric
         'Dim Encrypted = a.Encrypt(Decrypted, PublicKey)
         'Return Encrypted.Bytes
-        Return Decrypted.Bytes
+        Return Security.EncryptData(PublicKey, Decrypted.Bytes)
     End Function
 End Class

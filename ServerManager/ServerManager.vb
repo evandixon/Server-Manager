@@ -2,15 +2,21 @@
 Imports System.Net.Sockets
 
 Public Class Manager
+    Private Property PluginManager As PluginManager
     Public Property Servers As Dictionary(Of String, Service)
-    Private Property ServiceConstructors As Dictionary(Of String, CreateService)
     Delegate Function CreateService(ServiceData As String) As Service
     Private Property COutClients As New Dictionary(Of String, ConnectionServerEventArgs)
 #Region "Events and Handlers"
     Public Sub HandleRequest(sender As Object, ByRef e As ServerManager.ConnectionServerEventArgs)
-        Select Case e.Request.Type
-            Case "command"
-                e.SendResponse(New ResponsePacket("string", HandleRootConsoleInput(e.Request.Request)))
+        Select e.Request.Type.ToLower
+            Case "cin"
+                Dim parts As String() = e.Request.Request.Split(" ".ToCharArray, 2)
+                If Servers.ContainsKey(parts(0)) Then
+                    Servers(parts(0)).SendInput(parts(1))
+                    e.SendResponse(New ResponsePacket("string", "Input sent successfully."))
+                Else
+                    e.SendResponse(New ResponsePacket("string", "Server " & parts(0) & " is not currently loaded or does not exist."))
+                End If
             Case "cout"
                 If Servers.ContainsKey(e.Request.Request) Then
                     e.Close = False
@@ -19,65 +25,47 @@ Public Class Manager
                 Else
                     e.SendResponse(New ResponsePacket("string", "Server " & e.Request.Request & " is not currently loaded or does not exist."))
                 End If
+            Case "command"
+                Dim parts As String() = e.Request.Request.Split(" ".ToCharArray, 2)
+                Select Case parts(0).ToLower
+                    Case "add"
+                        If parts.Length > 1 Then
+                            AddServer(parts(1))
+                            e.SendResponse(New ResponsePacket("string", "Server created successfully."))
+                        Else
+                            e.SendResponse(New ResponsePacket("string", "Usage: add <arguments>"))
+                        End If
+                    Case "delete"
+                        If parts.Length > 1 Then
+                            DeleteServer(parts(1))
+                            e.SendResponse(New ResponsePacket("string", "Server deleted."))
+                        Else
+                            e.SendResponse(New ResponsePacket("string", "Usage: delete <Server Name>"))
+                        End If
+                    Case "start"
+                        If parts.Length > 1 Then
+                            StartServer(parts(1))
+                            e.SendResponse(New ResponsePacket("string", "Server started."))
+                        Else
+                            e.SendResponse(New ResponsePacket("string", "Usage: start <Server Name>"))
+                        End If
+                    Case "stop"
+                        If parts.Length > 1 Then
+                            StopServer(parts(1))
+                            e.SendResponse(New ResponsePacket("string", "Server stopped."))
+                        Else
+                            e.SendResponse(New ResponsePacket("string", "Usage: stop <Server Name>"))
+                        End If
+                    Case "kill"
+                        If parts.Length > 1 Then
+                            KillServer(parts(1))
+                            e.SendResponse(New ResponsePacket("string", "Server stopped forcibly."))
+                        Else
+                            e.SendResponse(New ResponsePacket("string", "Usage: kill <Server Name>"))
+                        End If
+                End Select
         End Select
     End Sub
-    Public Function HandleRootConsoleInput(Command As String) As String
-        Dim commandParts As String() = Command.Split(" ".ToCharArray, 2)
-        If commandParts.Length > 0 Then
-            Select Case commandParts(0).ToLower
-                Case "cin"
-                    If commandParts.Length > 1 AndAlso commandParts(1).Contains(" ") Then
-                        Dim parts As String() = commandParts(1).Split(" ".ToCharArray, 2)
-                        If Servers.ContainsKey(parts(0)) Then
-                            Servers(parts(0)).SendInput(parts(1))
-                            Return "Input sent successfully."
-                        Else
-                            Return "Server " & parts(0) & " is not currently loaded or does not exist."
-                        End If
-                    Else
-                        Return "Usage: cin <server> <command>"
-                    End If
-                Case "start"
-                    If commandParts.Length > 1 Then
-                        If Servers.ContainsKey(commandParts(1)) Then
-                            Servers(commandParts(1)).StartServer()
-                            Return "Server started successfully."
-                        Else
-                            Return "Server " & commandParts(1) & " is not currently loaded or does not exist."
-                        End If
-                    Else
-                        Return "Usage: start <server>"
-                    End If
-                Case "stop"
-                    If commandParts.Length > 1 Then
-                        If Servers.ContainsKey(commandParts(1)) Then
-                            Servers(commandParts(1)).StopServer()
-                            Return "Server stopped successfully."
-                        Else
-                            Return "Server " & commandParts(1) & " is not currently loaded or does not exist."
-                        End If
-                    Else
-                        Return "Usage: stop <server>"
-                    End If
-                Case "restart"
-                    If commandParts.Length > 1 Then
-                        If Servers.ContainsKey(commandParts(1)) Then
-                            Servers(commandParts(1)).StopServer()
-                            Servers(commandParts(1)).StartServer()
-                            Return "Server restarted successfully."
-                        Else
-                            Return "Server " & commandParts(1) & " is not currently loaded or does not exist."
-                        End If
-                    Else
-                        Return "Usage: restart <server>"
-                    End If
-                Case Else
-                    Return "Unknown command """ & commandParts(0) & """."
-            End Select
-        Else
-            Return "Given command was empty."
-        End If
-    End Function
 
     Public Event ConsoleDataWritten(sender As Object, args As DataReceivedEventArgs)
     Private Sub OnConsoleDataWritten(sender As Object, args As DataReceivedEventArgs)
@@ -91,25 +79,54 @@ Public Class Manager
         RaiseEvent ConsoleDataWritten(sender, args)
     End Sub
 #End Region
-
-#Region "Public Methods"
-    <Obsolete("Not obsolete, not finished.  Only loads internal code.")>
-    Private Sub LoadPlugins()
-        ServiceConstructors.Add("service", AddressOf Service.GetServiceFromStartData)
+#Region "Individual Service Control"
+    Public Sub AddServer(ConstructorData As String)
+        Dim parts As String() = ConstructorData.Split(" ".ToCharArray, 3)
+        If PluginManager.ServiceConstructors.ContainsKey(parts(0)) Then
+            Servers.Add(parts(1), PluginManager.ServiceConstructors(parts(0)).Invoke(parts(2)))
+            Servers(parts(1)).ServiceName = parts(1)
+        End If
     End Sub
+    Public Sub DeleteServer(ServerName As String)
+        If Servers.ContainsKey(ServerName) Then
+            Servers(ServerName).StopServer()
+            Servers.Remove(ServerName)
+        End If
+    End Sub
+    Public Sub StartServer(ServerName As String)
+        If Servers.ContainsKey(ServerName) Then
+            Servers(ServerName).StartServer()
+        End If
+    End Sub
+    Public Sub StopServer(ServerName As String)
+        If Servers.ContainsKey(ServerName) Then
+            Servers(ServerName).StopServer()
+        End If
+    End Sub
+    Public Sub KillServer(ServerName As String)
+        If Servers.ContainsKey(ServerName) Then
+            Servers(ServerName).KillServer()
+        End If
+    End Sub
+#End Region
+#Region "Methods"
+    Private Sub EnsurePluginsLoaded()
+        If PluginManager Is Nothing Then
+            PluginManager = New PluginManager(IO.Path.Combine(Environment.CurrentDirectory, "Plugins"))
+            PluginManager.ServiceConstructors.Add("service", AddressOf Service.GetServiceFromStartData)
+        End If
+    End Sub
+    
+
     Private Sub LoadServers()
-        LoadPlugins()
+        EnsurePluginsLoaded()
         Dim p = GetResourcePath("Servers.txt")
         If Not IO.File.Exists(p) Then
             IO.File.WriteAllText(p, "")
         End If
         Dim serverDefs As String() = IO.File.ReadAllLines(p)
         For Each item In serverDefs
-            Dim parts As String() = item.Split(" ".ToCharArray, 3)
-            If ServiceConstructors.ContainsKey(parts(0)) Then
-                Servers.Add(parts(1), ServiceConstructors(parts(0)).Invoke(parts(2)))
-                Servers(parts(1)).ServiceName = parts(1)
-            End If
+            AddServer(item)
         Next
     End Sub
     Public Sub StartAllServers()
@@ -140,6 +157,5 @@ Public Class Manager
 
     Public Sub New()
         Servers = New Dictionary(Of String, Service)
-        ServiceConstructors = New Dictionary(Of String, CreateService)
     End Sub
 End Class
