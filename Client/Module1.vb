@@ -11,7 +11,12 @@ Module Module1
         'Console.ReadLine()
         c = New ServerManager.ConnectionClient(New IPAddress({127, 0, 0, 1}), 64325, ServerManager.Keys.GetPrivateKey, ServerManager.Keys.GetPublicKey)
         While True
-            c.SendRequest(New ServerManager.RequestPacket("evandixon", "password", "command", Console.ReadLine))
+            Dim commandType As String = Console.ReadLine
+            If Not commandType = "cout" Then
+                c.SendRequest(New ServerManager.RequestPacket("evandixon", "password", commandType, Console.ReadLine))
+            Else
+                c.SendRequestAsync(New ServerManager.RequestPacket("evandixon", "password", commandType, Console.ReadLine))
+            End If
         End While
     End Sub
 

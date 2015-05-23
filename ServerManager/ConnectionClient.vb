@@ -4,8 +4,8 @@ Imports EncryptionClassLibrary.Encryption.Asymmetric
 
 Public Class ConnectionClient
     Private Client As TcpClient
-    Private DecryptKey As PrivateKey
-    Private EncryptKey As PublicKey
+    Private DecryptKey As CryptographyLibrary.AsymmetricKey
+    Private EncryptKey As CryptographyLibrary.AsymmetricKey
     Private EndPoint As IPEndPoint
     Public Event ResponseRecieved(sender As Object, r As ResponsePacket)
     Public Function SendRequest(Request As RequestPacket) As ResponsePacket
@@ -20,8 +20,8 @@ Public Class ConnectionClient
         Dim p As Integer = 0
         Dim pbuf(3) As Byte
         s.Read(pbuf, 0, pbuf.Length)
-        Dim data = GetBytesFromStream(s, p)
         p = BitConverter.ToInt32(pbuf, 0)
+        Dim data = GetBytesFromStream(s, p)
         Client.Close()
         Return ResponsePacket.DecryptPacket(data, DecryptKey)
     End Function
@@ -32,26 +32,27 @@ Public Class ConnectionClient
     ''' <param name="Request"></param>
     ''' <remarks></remarks>
     Public Async Sub SendRequestAsync(Request As RequestPacket)
+        Client = New TcpClient()
         Client.Connect(EndPoint)
         Dim s = Client.GetStream
         Dim d = Request.EncryptPacket(EncryptKey)
-        s.Write(d, 0, d.Length)
+        Dim toSend As New List(Of Byte)
+        toSend.AddRange(BitConverter.GetBytes(d.Length))
+        toSend.AddRange(d)
+        s.Write(toSend.ToArray, 0, toSend.Count)
         Dim close As Boolean = False
         While Not close
-            '' p = BitConverter.ToInt32(GetBytesFromStream(s, 4), 0)
             Dim p As Integer = 0
             Dim pbuf(3) As Byte
             s.Read(pbuf, 0, pbuf.Length)
             p = BitConverter.ToInt32(pbuf, 0)
-            'If p.Type = "length" Then
-            Dim r = ResponsePacket.DecryptPacket(GetBytesFromStream(s, p), DecryptKey)
-            RaiseEvent ResponseRecieved(Me, r)
-            'ElseIf p.Type = "close" Then
-            'Console.WriteLine("Closed.")
-            'close = True
-            'Else
-            'RaiseEvent ResponseRecieved(Me, p)
-            'End If
+            Dim data = GetBytesFromStream(s, p)
+            Dim packet = ResponsePacket.DecryptPacket(data, DecryptKey)
+            If packet.Response = "close" Then
+                close = True
+            Else
+                RaiseEvent ResponseRecieved(Me, packet)
+            End If
         End While
         Client.Close()
     End Sub
@@ -65,7 +66,7 @@ Public Class ConnectionClient
             Next
             Return bytes.ToArray
     End Function
-    Public Sub New(IP As IPAddress, Port As Integer, DecryptKey As PrivateKey, EncryptKey As PublicKey)
+    Public Sub New(IP As IPAddress, Port As Integer, DecryptKey As CryptographyLibrary.AsymmetricKey, EncryptKey As CryptographyLibrary.AsymmetricKey)
         EndPoint = New IPEndPoint(IP, Port)
         Me.DecryptKey = DecryptKey
         Me.EncryptKey = EncryptKey

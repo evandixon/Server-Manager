@@ -76,7 +76,11 @@ Public Class Service
     End Sub
     Public Shared Function GetServiceFromStartData(ConstructorData As String) As Service
         Dim parts As String() = ConstructorData.Split(";".ToCharArray, 2)
-        Return New Service(parts(0), parts(1))
+        If parts.Length = 1 Then
+            Return New Service(parts(0), "")
+        Else
+            Return New Service(parts(0), parts(1))
+        End If
     End Function
     Public Overridable Function GetConstructorData() As String
         Return String.Format("{0};{1}", Filename, Arguments)

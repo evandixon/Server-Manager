@@ -6,6 +6,7 @@ Public Class Manager
     Public Property Servers As Dictionary(Of String, Service)
     Delegate Function CreateService(ServiceData As String) As Service
     Private Property COutClients As New Dictionary(Of String, ConnectionServerEventArgs)
+
 #Region "Events and Handlers"
     Public Sub HandleRequest(sender As Object, ByRef e As ServerManager.ConnectionServerEventArgs)
         Select e.Request.Type.ToLower
@@ -63,6 +64,8 @@ Public Class Manager
                         Else
                             e.SendResponse(New ResponsePacket("string", "Usage: kill <Server Name>"))
                         End If
+                    Case "echo"
+                        e.SendResponse(New ResponsePacket("string", parts(1)))
                 End Select
         End Select
     End Sub

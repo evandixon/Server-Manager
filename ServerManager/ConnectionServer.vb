@@ -7,8 +7,8 @@ Public Class ConnectionServer
     Public Event ClientConnected(sender As Object, ByRef e As ConnectionServerEventArgs)
     Private Listener As TcpListener
     Private Cancel As Boolean
-    Private DecryptKey As PrivateKey
-    Private EncryptKey As PublicKey
+    Private DecryptKey As CryptographyLibrary.AsymmetricKey
+    Private EncryptKey As CryptographyLibrary.AsymmetricKey
     ''' <summary>
     ''' Listens for incoming connections until an event handler cancels it.
     ''' Runs synchronously.
@@ -71,7 +71,7 @@ Public Class ConnectionServer
     Public Sub StopListening()
         Listener.Stop()
     End Sub
-    Public Sub New(IP As IPAddress, Port As Integer, DecryptKey As PrivateKey, EncryptKey As PublicKey)
+    Public Sub New(IP As IPAddress, Port As Integer, DecryptKey As CryptographyLibrary.AsymmetricKey, EncryptKey As CryptographyLibrary.AsymmetricKey)
         Listener = New TcpListener(IP, Port)
         Me.DecryptKey = DecryptKey
         Me.EncryptKey = EncryptKey
@@ -80,7 +80,7 @@ End Class
 Public Class ConnectionServerEventArgs
     Inherits EventArgs
     Public Property Client As TcpClient
-    Private EncryptKey As PublicKey
+    Private EncryptKey As CryptographyLibrary.AsymmetricKey
     Public Property Request As RequestPacket
     Public Property Cancel As Boolean
     ''' <summary>
@@ -111,10 +111,11 @@ Public Class ConnectionServerEventArgs
             Console.WriteLine(ex)
         End Try
     End Sub
-    Public Sub New(Request As RequestPacket, ByRef Client As TcpClient, EncryptKey As PublicKey)
+    Public Sub New(Request As RequestPacket, ByRef Client As TcpClient, EncryptKey As CryptographyLibrary.AsymmetricKey)
         Me.Request = Request
         Me.Client = Client
         Me.Cancel = False
         Me.Close = True
+        Me.EncryptKey = EncryptKey
     End Sub
 End Class

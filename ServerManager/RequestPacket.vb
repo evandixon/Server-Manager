@@ -15,34 +15,12 @@ Public Class RequestPacket
     Public Sub New()
         MyBase.New()
     End Sub
-    ''' <summary>
-    ''' In the future, will decrypt a packet.  Currently, returns the string representation of the data.
-    ''' </summary>
-    ''' <param name="EncryptedData"></param>
-    ''' <param name="PrivateKey"></param>
-    ''' <returns></returns>
-    ''' <remarks></remarks>
-    Public Shared Function DecryptPacket(EncryptedData As Byte(), PrivateKey As Asymmetric.PrivateKey) As RequestPacket
-        'Dim Encrypted As New EncryptionClassLibrary.Encryption.Data(EncryptedData)
-        'Dim a As New EncryptionClassLibrary.Encryption.Asymmetric()
-        'Dim Decrypted = a.Decrypt(Encrypted, PrivateKey)
+    Public Shared Function DecryptPacket(EncryptedData As Byte(), PrivateKey As CryptographyLibrary.AsymmetricKey) As RequestPacket
         Dim j As New JavaScriptSerializer
-        'Return j.Deserialize(Of RequestPacket)(Decrypted.Text)
-        Return j.Deserialize(Of RequestPacket)(Text.Encoding.ASCII.GetString(Security.DecryptData(PrivateKey, EncryptedData)))
+        Return j.Deserialize(Of RequestPacket)(Security.DecryptData(PrivateKey, EncryptedData))
     End Function
-    ''' <summary>
-    ''' In the future, will encrypt the packet using symmetric encryption, with asymetric encryption to encrypt the key.
-    ''' Currently jsut returns a byte representation of the packet.
-    ''' </summary>
-    ''' <param name="PublicKey"></param>
-    ''' <returns></returns>
-    ''' <remarks></remarks>
-    Public Function EncryptPacket(PublicKey As Asymmetric.PublicKey) As Byte()
+    Public Function EncryptPacket(PublicKey As CryptographyLibrary.AsymmetricKey) As Byte()
         Dim j As New JavaScriptSerializer
-        Dim Decrypted As New Data(j.Serialize(Me))
-        'Dim a As New EncryptionClassLibrary.Encryption.Asymmetric
-        'Dim Encrypted = a.Encrypt(Decrypted, PublicKey)
-        'Return Encrypted.Bytes
-        Return Security.EncryptData(PublicKey, Decrypted.Bytes)
+        Return Security.EncryptData(PublicKey, j.Serialize(Me))
     End Function
 End Class
