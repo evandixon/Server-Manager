@@ -64,6 +64,23 @@ Public Class Manager
                         Else
                             e.SendResponse(New ResponsePacket("string", "Usage: kill <Server Name>"))
                         End If
+                    Case "list"
+                        Dim value As New StringBuilder
+                        For Each item In Servers.Keys
+                            value.Append(item)
+                            value.Append(",")
+                        Next
+                        e.SendResponse(New ResponsePacket("csv", value.ToString.Trim(",")))
+                    Case "status"
+                        If parts.Length > 1 Then
+                            If Servers.ContainsKey(parts(1)) Then
+                                e.SendResponse(New ResponsePacket("string", Servers(parts(1)).status))
+                            Else
+                                e.SendResponse(New ResponsePacket("string", String.Format("Server {0} does not exist.", parts(1))))
+                            End If
+                        Else
+                            e.SendResponse(New ResponsePacket("string", "Usage: start <Server Name>"))
+                        End If
                     Case "echo"
                         e.SendResponse(New ResponsePacket("string", parts(1)))
                 End Select

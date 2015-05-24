@@ -15,12 +15,17 @@ Public Class Service
     Public Overridable Property Filename As String
     Public Overridable Property Arguments As String
     Public Property OutputLog As StringBuilder
+    Public Property Status As String
     Public Function GetOutputString() As String
         Return OutputLog.ToString
     End Function
 
     Private Sub _p_ErrorDataReceived(sender As Object, e As DataReceivedEventArgs) Handles _p.ErrorDataReceived
         OutputHandler(sender, e)
+    End Sub
+
+    Private Sub _p_Exited(sender As Object, e As EventArgs) Handles _p.Exited
+        Status = "Stopped"
     End Sub
     ''' <summary>
     ''' 
@@ -37,16 +42,21 @@ Public Class Service
         End If
     End Sub
     Public Overridable Sub StartServer()
+        Status = "Starting"
         _p.Start()
         _p.BeginOutputReadLine()
         _p.BeginErrorReadLine()
+        Status = "Started"
     End Sub
 
     Public Overridable Sub StopServer()
+        Status = "Stopping"
         _p.Close()
     End Sub
     Public Overridable Sub KillServer()
+        Status = "Killing"
         _p.Kill()
+        Status = "Killed"
     End Sub
     Public Overridable Sub SendInput(ConsoleLine As String)
         _p.StandardInput.WriteLine(ConsoleLine)
@@ -60,6 +70,7 @@ Public Class Service
         MyBase.New()
         Me.Filename = Filename
         Me.Arguments = Arguments
+        Me.Status = "Stopped"
         OutputLog = New StringBuilder
         '_p = Process
         With _p
